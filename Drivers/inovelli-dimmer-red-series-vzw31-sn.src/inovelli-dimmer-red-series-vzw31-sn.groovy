@@ -1,4 +1,4 @@
-def getDriverDate() { return "2024-09-06" /** + orangeRed(" (beta)") **/ }	// **** DATE OF THE DEVICE DRIVER
+def getDriverDate() { return "2024-10-09" /** + orangeRed(" (beta)") **/ }	// **** DATE OF THE DEVICE DRIVER
 //  ^^^^^^^^^^  UPDATE THIS DATE IF YOU MAKE ANY CHANGES  ^^^^^^^^^^
 /**
 * Inovelli VZW31-SN Red Series Z-Wave 2-in-1 Dimmer
@@ -18,6 +18,8 @@ def getDriverDate() { return "2024-09-06" /** + orangeRed(" (beta)") **/ }	// **
 * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 * for the specific language governing permissions and limitations under the License.
 *
+* 2024-10-09(EM) fix bug that was preventing the ability to change remote control from the device page
+* 2024-10-08(EM) make it so parameter 156 and 157 update when using setParameter or when changed locally
 * 2024-09-06(EM) adding parameters 156 and 157 to enable/disable local and remote control
 * 2024-08-07(EM) fix issues preventing preferences from being sent in "updated" and "configure" methods
 * 2024-05-28(MA) add support for unique scenes on Aux switch (P123)
@@ -324,7 +326,7 @@ def userSettableParams() {   //controls which options are available depending on
 }
 
 def readOnlyParams() {
-	return [21,32,33,51,157,257]
+	return [21,32,33,51,257]
 }
 
 private getCommandClassVersions() {
@@ -1114,8 +1116,8 @@ void zwaveEvent(hubitat.zwave.Command cmd) {
 			if (infoEnable) log.info "${device.displayName} Protection Report: Local protection is ${cmd.localProtectionState > 0 ? "on" : "off"} & Remote protection is ${cmd.rfProtectionState > 0 ? "on" : "off"}"
 			state.localProtectionState = cmd.localProtectionState
 			state.rfProtectionState = cmd.rfProtectionState
-			device.updateSetting("disableLocal",[value:cmd.localProtectionState?"1":"0",type:"enum"])
-			device.updateSetting("disableRemote",[value:cmd.rfProtectionState?"1":"0",type:"enum"])
+			device.updateSetting("parameter156",[value:cmd.localProtectionState?"1":"0",type:"enum"])
+			device.updateSetting("parameter157",[value:cmd.rfProtectionState?"1":"0",type:"enum"])
 			def children = childDevices
 			def childDevice = children.find{it.deviceNetworkId.endsWith("ep101")}
 			if (childDevice) childDevice.sendEvent(name: "switch", value: cmd.localProtectionState > 0 ? "on" : "off")
@@ -1296,9 +1298,11 @@ def setParameter(paramNum=0, value=null, size=null, delay=shortDelay) {
 	state.lastCommandTime = nowFormatted()
 	def cmds = []
     if (paramNum == 156 && value!=null) {
+        state.localProtectionState = (value > 0 ? 1 : 0)
         cmds += zwave.protectionV2.protectionSet(localProtectionState : value > 0 ? 1 : 0, rfProtectionState: state.rfProtectionState? state.rfProtectionState:0)
         cmds += zwave.protectionV2.protectionGet()
     } else if (paramNum == 157 && value!=null) {
+        state.rfProtectionState = (value > 0 ? 1 : 0)
         cmds += zwave.protectionV2.protectionSet(rfProtectionState: value > 0 ? 1 : 0, localProtectionState: state.localProtectionState? state.localProtectionState:0)
         cmds += zwave.protectionV2.protectionGet()
     } else if (value!=null) {
@@ -2502,7 +2506,7 @@ def processAssociations(){
         type: "number"
         ],
     parameter156 : [
-        name: "Local Protection",
+        name: "Local Control",
         description: "Ability to control switch from the wall.",
         range: ["0":"Local control enabled (default)", "1":"Local control disabled"],
         default: 0,
@@ -2510,7 +2514,7 @@ def processAssociations(){
         type: "enum"
         ] ,
     parameter157 : [
-        name: "Remote Protection (read only) <i>use Remote Control command to change.</i>",
+        name: "Remote Control",
         description: "Ability to control switch from the hub.",
         range: ["0":"Remote control enabled (default)", "1":"Remote control disabled"],
         default: 0,
