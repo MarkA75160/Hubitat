@@ -1,4 +1,4 @@
-def getDriverDate() { return "2026-01-21" }	// **** DATE OF THE DEVICE DRIVER
+def getDriverDate() { return "2026-09-07" }	// **** DATE OF THE DEVICE DRIVER
 //  ^^^^^^^^^^  UPDATE THIS DATE IF YOU MAKE ANY CHANGES  ^^^^^^^^^^
 /**
 * Inovelli VZW31-SN Red Series Z-Wave 2-in-1 Dimmer
@@ -18,6 +18,7 @@ def getDriverDate() { return "2026-01-21" }	// **** DATE OF THE DEVICE DRIVER
 * on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
 * for the specific language governing permissions and limitations under the License.
 *
+* 2026-09-07(EM) Add parameters 124 (aux detection level) and 165 (dumb detection level), firmware 2.03+.
 * 2026-01-21(EM) Fixing bug in undefined button function logging.
 * 2025-12-20(EM) Fixing bug in getTemperature command that was preventing the temperature from being reported.
 * 2025-11-25(EM) Removing delayBetween from return values for initialize()
@@ -311,12 +312,12 @@ metadata {
 }
 
 def validConfigParams() {	//all valid parameters for this specific device (configParams Map contains definitions for all parameters for all devices)
-	return [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,50,52,53,54,55,56,58,59,64,69,74,79,84,89,94,95,96,97,98,99,100,120,123,130,131,132,133,134,156,157,158,159,160,161,162]
+	return [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,21,22,23,24,25,50,52,53,54,55,56,58,59,64,69,74,79,84,89,94,95,96,97,98,99,100,120,123,124,130,131,132,133,134,165,156,157,158,159,160,161,162]
 }
 
 def userSettableParams() {   //controls which options are available depending on whether the device is configured as a switch or a dimmer.
-    if (state.parameter158value == 1) return [158,22,52,                  10,11,12,      15,17,18,19,20,23,24,25,50,      58,59,95,96,97,98,100,120,123,130,131,132,133,134,156,157,159,160,161,162]  //on/off mode
-    else                              return [158,22,52,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,23,24,25,50,53,54,55,56,58,59,95,96,97,98,100,120,123,130,131,132,133,134,156,157,    160,    162]  //dimmer mode
+    if (state.parameter158value == 1) return [158,22,52,                  10,11,12,      15,17,18,19,20,23,24,25,50,      58,59,95,96,97,98,100,120,123,124,130,131,132,133,134,165,156,157,159,160,161,162]  //on/off mode
+    else                              return [158,22,52,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,18,19,20,23,24,25,50,53,54,55,56,58,59,95,96,97,98,100,120,123,124,130,131,132,133,134,165,156,157,    160,    162]  //dimmer mode
 }
 
 def readOnlyParams() {
@@ -993,6 +994,9 @@ void zwaveEvent(hubitat.zwave.Command cmd) {
 					case 123:	//Aux Switch Scenes
                         infoMsg += " (Aux Scenes " + (valueInt==0?red("disabled"):limeGreen("enabled")) + ")"
 						break
+					case 124:	//Aux detection level (fw 2.03+)
+                        infoMsg += " (Aux Detection Level ${valueInt})"
+						break
 					case 125:	//Binding Off-to-On Sync Level
                         infoMsg += " (Send Level with Binding " + (valueInt==0?red("disabled"):limeGreen("enabled")) + ")"
 						break
@@ -1041,6 +1045,9 @@ void zwaveEvent(hubitat.zwave.Command cmd) {
 					case 163:    //LED bar display levels
                     case 263:
                         infoMsg += " (LED bar display levels: ${valueInt?:'full range'})"
+                        break
+					case 165:    //Dumb detection level (fw 2.03+)
+                        infoMsg += " (Dumb Detection Level ${valueInt})"
                         break
                     default:
 						infoMsg += " [0x${valueInt<=0xFF?valueHex.substring(6):valueInt<=0xFFFF?valueHex.substring(4):valueHex}] " + orangeRed(bold("Undefined Parameter $attrInt"))
@@ -2472,6 +2479,14 @@ def processAssociations(){
         size: 1,
         type: "enum"
         ],
+    parameter124 : [
+        name: "Aux Detection Level",
+        description: "(Firmware 2.03+) Aux detection level (P124). Range: 0-4, default: 1. If you are having issues with the aux function, start setting from 0 and continue until the aux function operates normally.",
+        range: "0..4",
+        default: 1,
+        size: 1,
+        type: "number"
+        ],
     parameter125 : [
         name: "Binding Off-to-On Sync Level",
         description: "Send Move_To_Level using Default Level with Off/On to bound devices",
@@ -2528,6 +2543,14 @@ def processAssociations(){
         range: "0..255",
         default: 212,
         size: 8,
+        type: "number"
+        ],
+    parameter165 : [
+        name: "Dumb Detection Level",
+        description: "(Firmware 2.03+) Dumb detection level (P165). Range: 0-4, default: 0. If the dumb switch function is not working correctly, start at 0 and increase until it operates normally.",
+        range: "0..4",
+        default: 0,
+        size: 1,
         type: "number"
         ],
     parameter156 : [
