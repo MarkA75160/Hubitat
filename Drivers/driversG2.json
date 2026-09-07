@@ -5,7 +5,7 @@
    "version": "20.4.30",
    "dateReleased": "2020-04-30",
    "documentationLink": "https://support.inovelli.com/portal/en/kb/inovelli",
-   "releaseNotes": "VZM32-SN: Fixing firmware update command.",
+   "releaseNotes": "VZM31-SN: Add parameters 124 (aux detection level) and 165 (dumb detection level), firmware 2.03+.",
    "drivers" : [
    	{
    		"id" : "405b5e34-073e-4dfa-af65-3b8da1a9fc66",
@@ -129,7 +129,7 @@
 		"location": "https://raw.githubusercontent.com/InovelliUSA/Hubitat/master/Drivers/inovelli-dimmer-red-series-vzw31-sn.src/inovelli-dimmer-red-series-vzw31-sn.groovy",
 		"required": false,
 		"oauth": false,
-                "version": "26.1.21",
+                "version": "26.9.7",
 		"releaseNotes": ""
    	},
 	{
